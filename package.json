@@ -4,6 +4,10 @@
   "description": "DeepSeek Harness desktop wrapper: bundled server + UI with tray",
   "main": "main.js",
   "scripts": {
+    "postinstall": "node scripts/patch-dsh-ui.mjs",
+    "prestart": "node scripts/patch-dsh-ui.mjs",
+    "prepackage:mac": "node scripts/patch-dsh-ui.mjs",
+    "predist:mac": "node scripts/patch-dsh-ui.mjs",
     "start": "electron .",
     "package:mac": "electron-builder --mac dir --arm64",
     "dist:mac": "electron-builder --mac dmg --arm64",
