@@ -10,7 +10,7 @@ const ASSETS_DIR = path.join(ROOT_DIR, 'assets');
 const STAR_HISTORY_PATH = path.join(ASSETS_DIR, 'star-history.json');
 const STAR_SVG_PATH = path.join(ASSETS_DIR, 'star-history.svg');
 const COMMIT_SVG_PATH = path.join(ASSETS_DIR, 'commit-activity.svg');
-const REPOSITORY = 'u7-u7/dsh-desktop';
+const REPOSITORY = process.env.GITHUB_REPOSITORY || 'wangjicheng2004/dsh-desktop';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 const ACTIVITY_DAYS = 7;
@@ -54,6 +54,11 @@ function updateStarHistory() {
   const starCount = starsArgument >= 0 ? Number(process.argv[starsArgument + 1]) : Number.NaN;
   const history = readStarHistory();
   const today = dateKey(new Date());
+
+  // Star 数据不能跨仓库复用，否则迁移仓库后会生成误导性的趋势线。
+  if (history.repository !== REPOSITORY) {
+    history.points = [];
+  }
 
   if (Number.isInteger(starCount) && starCount >= 0) {
     history.points = history.points.filter((point) => point.date !== today);
@@ -161,12 +166,14 @@ function renderCommitActivity(counts) {
     latestBucket.getUTCDate(),
   ));
   const start = new Date(latestDay.getTime() - (ACTIVITY_DAYS - 1) * DAY_MS);
-  const cell = 20;
-  const gap = 5;
+  const cellWidth = 48;
+  const cellHeight = 20;
+  const columnGap = 7;
+  const rowGap = 5;
   const left = 78;
   const top = 46;
-  const width = left + slotsPerDay * (cell + gap) + 20;
-  const height = top + ACTIVITY_DAYS * (cell + gap) + 30;
+  const width = 760;
+  const height = top + ACTIVITY_DAYS * (cellHeight + rowGap) + 30;
   const maximum = Math.max(1, ...counts.values());
   const cells = [];
   const timeLabels = [];
@@ -174,22 +181,22 @@ function renderCommitActivity(counts) {
 
   for (let slot = 0; slot < slotsPerDay; slot += 1) {
     const hour = slot * ACTIVITY_BUCKET_HOURS;
-    const x = left + slot * (cell + gap) + cell / 2;
+    const x = left + slot * (cellWidth + columnGap) + cellWidth / 2;
     timeLabels.push(`<text x="${x}" y="${top - 12}" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="10" fill="#57606a">${String(hour).padStart(2, '0')}</text>`);
   }
 
   for (let day = 0; day < ACTIVITY_DAYS; day += 1) {
     const dayStart = new Date(start.getTime() + day * 24 * HOUR_MS);
-    const y = top + day * (cell + gap) + cell / 2 + 4;
+    const y = top + day * (cellHeight + rowGap) + cellHeight / 2 + 4;
     dateLabels.push(`<text x="${left - 9}" y="${y}" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="10" fill="#57606a">${activityDateKey(dayStart).slice(5)}</text>`);
 
     for (let slot = 0; slot < slotsPerDay; slot += 1) {
       const bucket = new Date(dayStart.getTime() + slot * ACTIVITY_BUCKET_HOURS * HOUR_MS);
       const count = counts.get(activityBucketKey(bucket)) ?? 0;
       const level = count === 0 ? 0 : Math.min(4, Math.ceil((count / maximum) * 4));
-      const x = left + slot * (cell + gap);
-      const rectY = top + day * (cell + gap);
-      cells.push(`<rect x="${x}" y="${rectY}" width="${cell}" height="${cell}" rx="3" fill="${COMMIT_COLORS[level]}"><title>${formatActivityBucket(bucket)}: ${count} commits</title></rect>`);
+      const x = left + slot * (cellWidth + columnGap);
+      const rectY = top + day * (cellHeight + rowGap);
+      cells.push(`<rect x="${x}" y="${rectY}" width="${cellWidth}" height="${cellHeight}" rx="3" fill="${COMMIT_COLORS[level]}"><title>${formatActivityBucket(bucket)}: ${count} commits</title></rect>`);
     }
   }
 
