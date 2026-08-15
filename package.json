@@ -5,13 +5,17 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "test": "node --test",
     "package:mac": "electron-builder --mac dir --arm64",
     "dist:mac": "electron-builder --mac dmg --arm64",
+    "package:win": "electron-builder --win nsis --x64",
     "icon:mac": "node scripts/convert-mac-icon.mjs"
   },
   "dependencies": {
     "@deepseek-ai/cordis-plugin-group": "1.0.1",
-    "@deepseek-ai/dsh": "0.1.0-rc.6"
+    "@deepseek-ai/dsh": "0.1.0-rc.6",
+    "js-yaml": "^4.3.1",
+    "yauzl": "^3.4.0"
   },
   "devDependencies": {
     "electron": "^37.2.0",
@@ -23,11 +27,28 @@
     "appId": "com.deepseek.harness.desktop",
     "productName": "DeepSeek Harness",
     "asar": true,
-    "files": ["main.js", "package.json", "assets/**/*", "!node_modules/**/*"],
+    "files": [
+      "main.js",
+      "desktop-preload.js",
+      "desktop-services.js",
+      "package.json",
+      "assets/**/*",
+      "bundled-skills/**/*",
+      "bundled-plugins/**/*",
+      "!node_modules/**/*"
+    ],
     "extraResources": [
       {
         "from": "node_modules",
         "to": "node_modules"
+      },
+      {
+        "from": "bundled-skills",
+        "to": "bundled-skills"
+      },
+      {
+        "from": "bundled-plugins",
+        "to": "bundled-plugins"
       }
     ],
     "mac": {
@@ -35,8 +56,32 @@
       "icon": "assets/deepseek.icns",
       "identity": "-",
       "hardenedRuntime": false,
-      "target": [{ "target": "dmg", "arch": ["arm64"] }]
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ]
     },
-    "dmg": { "artifactName": "${productName}-${version}-mac-${arch}.${ext}" }
+    "dmg": {
+      "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
+    },
+    "win": {
+      "icon": "assets/deepseek.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

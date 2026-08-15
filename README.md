@@ -18,7 +18,11 @@
 | 托盘常驻 | 关闭窗口仅隐藏到托盘，任务不会中断。 |
 | 智能复用 | 3080 端口已有服务时直接复用，不重复启动。 |
 | 日志排错 | 启动过程写入 `dsh.log`，方便定位问题。 |
+| 技能 | 左栏入口，可通过对话式 `skill-creator` 在当前项目创建并调用 Skill。 |
+| API 用量 | 左栏入口，查询 DeepSeek 账号当前余额。 |
+| 皮肤 | 左栏入口，可导入、一键切换 CSS 或受信任的 DSH 插件皮肤。 |
 | 独立 Mac 应用 | macOS DMG 内置 DSH 和运行时，无需安装 Node.js、npm 或全局 `dsh`。 |
+| Windows 安装包 | 可构建 x64 NSIS `.exe` 安装程序。 |
 
 ## 📋 环境要求
 
@@ -60,7 +64,11 @@ echo '576e3a45dcf1c72f2bfcb94fa0d4c289952ddac40ae63684fdada271ee1c967f  /tmp/ins
 
 > 该命令会先校验脚本本身。安装完成后，仍请按住 Control 点击应用并选择「打开」。
 
-### 🪟 Windows：一键安装
+### 🪟 Windows：安装
+
+发布页提供安装包时，下载 `DeepSeek Harness Setup *.exe` 并按安装向导完成安装即可。
+
+尚未提供安装包或需要从源码运行时，可按以下方式一键安装：
 
 1. 获取源码：
 
@@ -99,6 +107,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File create-shortcut.ps1
 | 关闭窗口 | 隐藏到系统托盘，服务继续运行。 |
 | 单击托盘图标 | 重新打开窗口。 |
 | 托盘菜单 → 退出 | 停止服务并退出应用。 |
+| 左栏 → 技能 | 点击“开始创建 Skill”复制 `/skill-creator`，在对话中说明需求。创建器会确认需求后默认把新 Skill 写入当前项目 `.dsh/skills`；没有本地工作区时才写入本机 DSH Home。随后在输入框键入 `/` 调用。 |
+| 首次配置 | API 地址留空即使用 DeepSeek 官方地址；使用中转站时填写其 OpenAI 兼容根地址（可含 `/v1`，不要填写 `/chat/completions`）。 |
+| 左栏 → API 用量 | 查询当前 DeepSeek 账号余额；密钥只在 Electron 主进程中读取，不会暴露给网页。 |
+| 左栏 → 皮肤 | 导入 CSS 后点击“一键使用”立即切换；页面内提供 Deep Whale 导入教程、恢复默认按钮与可信来源提示。DSH 插件皮肤启用时会重启服务。 |
+
+> DeepSeek 公开接口提供的是账号余额，而非单个 API Key 的实时历史用量；按 Key 的明细需要到开放平台 Usage 页面导出。详见 [余额接口文档](https://api-docs.deepseek.com/zh-cn/api/get-user-balance) 与 [官方 FAQ](https://api-docs.deepseek.com/faq)。
+
+### 🎨 皮肤安全说明
+
+- **CSS 皮肤**：只包含样式，可直接导入并即时切换。
+- **DSH 插件皮肤**：兼容 [dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 这类带有 `skin.json`、`package.json`、`cordis.patch.yml` 和 `lib/client.js` 的包。它们会执行自带客户端脚本，务必仅导入可信来源；启用时会写入本地 web profile 并重启 DSH。
+- 皮肤及状态保存在应用自身的 DSH Home 中：macOS 位于 `~/Library/Application Support/dsh-desktop/dsh`，Windows 位于 `%APPDATA%\\dsh-desktop\\dsh`。
 
 ## 🔧 排错
 
@@ -148,6 +168,25 @@ npm run dist:mac
 - `dist/mac-arm64/DeepSeek Harness.app`：用于本机调试的应用目录。
 
 只生成 `.app` 时运行 `npm run package:mac`。当前构建的是未签名的 Apple Silicon 安装包。
+
+### 🪟 构建 Windows 安装包
+
+在 macOS 或 Windows 的项目根目录运行：
+
+```sh
+npm ci
+npm run package:win
+```
+
+产物位于 `dist/`，为 x64 NSIS 安装程序。Windows 上可直接完整验证安装；其他系统上的交叉构建只验证打包链路，建议仍在 Windows 机器上进行最终安装验收。
+
+### ✅ 自动测试
+
+```sh
+npm test
+```
+
+覆盖本机 Skill 的创建/浏览，以及 CSS 与 DSH 插件皮肤的导入、启用、移除等状态逻辑。
 
 ## 📄 License
 
