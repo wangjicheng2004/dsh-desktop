@@ -351,7 +351,11 @@ function injectDesktopPages() {
           });
           flow.insertBefore(button, traceRows[0]);
         }
-        button.textContent = thoughtLabel(seconds, expanded);
+        const label = thoughtLabel(seconds, expanded);
+        // Writing identical text still creates a child-list mutation. Because the
+        // surrounding observer watches the whole document, skip no-op writes to
+        // avoid scheduling this disclosure pass indefinitely.
+        if (button.textContent !== label) button.textContent = label;
         button.setAttribute("aria-expanded", String(expanded));
         for (const row of traceRows) {
           row.classList.toggle("dshdc-thought-hidden", !expanded);

@@ -150,6 +150,7 @@ test("ships a completed-turn thought disclosure without hiding live interactions
   assert.match(preload, /isAnswerRow/);
   assert.match(preload, /Collapse only a completed trace immediately before an answer/);
   assert.match(preload, /aria-expanded/);
+  assert.match(preload, /const label = thoughtLabel\(seconds, expanded\);\s+\/\/ Writing identical text[\s\S]*?if \(button\.textContent !== label\) button\.textContent = label;/);
 });
 
 test("ships GitHub skin import progress and retryable error handling", async () => {
