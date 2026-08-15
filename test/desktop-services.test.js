@@ -216,6 +216,7 @@ test("pins desktop builds to a supported Node version and verifies Windows on Wi
   const root = path.join(__dirname, "..");
   const manifest = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
   const installer = await fs.readFile(path.join(root, "install.ps1"), "utf8");
+  const main = await fs.readFile(path.join(root, "main.js"), "utf8");
   const workflow = await fs.readFile(path.join(root, ".github", "workflows", "verify-desktop-builds.yml"), "utf8");
 
   assert.equal(manifest.engines.node, ">=22.19.0");
@@ -228,6 +229,9 @@ test("pins desktop builds to a supported Node version and verifies Windows on Wi
   assert.match(workflow, /npm run package:win -- --publish never/);
   assert.match(workflow, /npm run package:mac -- --publish never/);
   assert.match(workflow, /ulimit -n 65536/);
+  assert.doesNotMatch(JSON.stringify(manifest.build.extraResources), /"from":"node_modules"/);
+  assert.doesNotMatch(manifest.build.files.join("\n"), /!node_modules\/\*\*\/\*/);
+  assert.match(main, /app\.getAppPath\(\).*node_modules/s);
 });
 
 test("activates a trusted DSH plugin skin through the web profile", async () => {

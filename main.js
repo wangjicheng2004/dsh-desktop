@@ -48,7 +48,10 @@ function iconPath() {
 }
 
 function bundledDshBin() {
-  const nodeModules = app.isPackaged ? path.join(process.resourcesPath, "node_modules") : path.join(__dirname, "node_modules");
+  // electron-builder keeps production dependencies in app.asar. Resolving from
+  // getAppPath avoids copying the complete development node_modules tree into
+  // Resources, which exhausts file descriptors while macOS signs the bundle.
+  const nodeModules = app.isPackaged ? path.join(app.getAppPath(), "node_modules") : path.join(__dirname, "node_modules");
   return path.join(nodeModules, "@deepseek-ai", "dsh", "lib", "bin.js");
 }
 

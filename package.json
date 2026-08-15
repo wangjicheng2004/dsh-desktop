@@ -37,14 +37,9 @@
       "package.json",
       "assets/**/*",
       "bundled-skills/**/*",
-      "bundled-plugins/**/*",
-      "!node_modules/**/*"
+      "bundled-plugins/**/*"
     ],
     "extraResources": [
-      {
-        "from": "node_modules",
-        "to": "node_modules"
-      },
       {
         "from": "bundled-skills",
         "to": "bundled-skills"
