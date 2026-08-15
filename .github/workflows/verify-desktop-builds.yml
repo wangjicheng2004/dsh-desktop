@@ -23,7 +23,11 @@ jobs:
 
       - run: npm ci
       - run: npm test
-      - run: npm run package:mac
+      - name: Package without publishing
+        shell: bash
+        run: |
+          ulimit -n 65536
+          npm run package:mac -- --publish never
 
   windows-x64:
     name: Windows x64 installer
@@ -38,7 +42,7 @@ jobs:
 
       - run: npm ci
       - run: npm test
-      - run: npm run package:win
+      - run: npm run package:win -- --publish never
 
       - uses: actions/upload-artifact@v4
         with:

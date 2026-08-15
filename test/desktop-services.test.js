@@ -225,6 +225,9 @@ test("pins desktop builds to a supported Node version and verifies Windows on Wi
   assert.match(workflow, /npm run package:win/);
   assert.match(workflow, /runs-on: macos-14/);
   assert.match(workflow, /npm run package:mac/);
+  assert.match(workflow, /npm run package:win -- --publish never/);
+  assert.match(workflow, /npm run package:mac -- --publish never/);
+  assert.match(workflow, /ulimit -n 65536/);
 });
 
 test("activates a trusted DSH plugin skin through the web profile", async () => {
