@@ -50,7 +50,23 @@ if (-not $nodeExe) {
     exit 1
 }
 
-Write-Step 1 "Node.js: $nodeExe"
+$nodeVersionText = (& $nodeExe --version).Trim()
+try {
+    $nodeVersion = [Version]$nodeVersionText.TrimStart("v")
+} catch {
+    Write-Host "[ERROR] Could not read the Node.js version from $nodeExe."
+    Read-Host "Press Enter to exit"
+    exit 1
+}
+
+if ($nodeVersion -lt [Version]"22.19.0") {
+    Write-Host "[ERROR] Node.js $nodeVersionText is too old. DeepSeek Harness requires Node.js 22.19.0 or later."
+    Write-Host "Please install the current Node.js LTS from https://nodejs.org, then run this script again."
+    Read-Host "Press Enter to exit"
+    exit 1
+}
+
+Write-Step 1 "Node.js: $nodeExe ($nodeVersionText)"
 
 # Ensure npm's global bin dir is on PATH for this session
 $npmGlobalBin = Join-Path $env:APPDATA "npm"
@@ -77,12 +93,12 @@ if (Test-Path $dshPkgJson) {
     }
 }
 
-# ===== Step 3: install Electron (project dependency) =====
-Write-Step 3 "Installing Electron (npmmirror mirror, ~100MB, please wait)..."
+# ===== Step 3: install locked project dependencies =====
+Write-Step 3 "Installing locked project dependencies (npmmirror mirror, ~100MB, please wait)..."
 $env:ELECTRON_MIRROR = "https://npmmirror.com/mirrors/electron/"
-& cmd /c "npm.cmd install --registry=https://registry.npmmirror.com"
+& cmd /c "npm.cmd ci --registry=https://registry.npmmirror.com"
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERROR] Failed to install Electron. Check your network and retry."
+    Write-Host "[ERROR] Failed to install project dependencies. Check your network and retry."
     Read-Host "Press Enter to exit"
     exit 1
 }

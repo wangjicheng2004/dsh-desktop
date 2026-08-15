@@ -43,7 +43,7 @@
 
 > 仅支持 Apple 芯片；暂不支持 Intel Mac。首次运行不需要安装 Node.js 或 `dsh`。
 
-1. 在 [GitHub Releases](https://github.com/wangjicheng2004/dsh-desktop/releases) 下载最新的 `DeepSeek.Harness-*-mac-arm64.dmg`。不要下载 `Source code (zip)`，它不能直接安装。
+1. 在 [GitHub Releases](https://github.com/u7-u7/dsh-desktop/releases) 下载最新的 `DeepSeek Harness-*-mac-arm64.dmg`。不要下载 `Source code (zip)`，它不能直接安装。
 2. 双击 DMG，把 **DeepSeek Harness** 拖入「应用程序（Applications）」，复制完成后弹出磁盘镜像。
 3. 从「应用程序」启动 **DeepSeek Harness**。首次启动约需 5–10 秒。
 
@@ -55,16 +55,11 @@
 
 先从菜单栏鲸鱼图标中选择「退出」，再用新 DMG 替换「应用程序」中的同名应用。不要直接从 DMG 窗口运行，否则容易留下多个同名副本。
 
-#### 🧰 终端校验安装（备用）
+#### 🧰 终端校验安装（发布后可用）
 
-适合 Finder 安装不顺利、但愿意使用终端的用户。它会下载固定版本、校验脚本与 DMG 的 SHA-256、安装到 `~/Applications`，不会要求管理员密码、覆盖旧应用或修改 Gatekeeper 设置。
+适合 Finder 安装不顺利、但愿意使用终端的用户。每个正式 Release 会附带校验过的安装脚本；当前仓库尚未上传 v1.0.4 的 Release 资产时，请不要执行旧仓库的下载命令，而是按下方“本地开发”章节构建。
 
-```sh
-curl -fL -o /tmp/install-deepseek-harness.sh https://github.com/wangjicheng2004/dsh-desktop/releases/download/v1.0.4/install-macos-v1.0.4.sh
-echo '46fef8b95555669603b6ad46d3d9f6dfe22c1539ff8dcdce708863bd7028f4eb  /tmp/install-deepseek-harness.sh' | shasum -a 256 -c && bash /tmp/install-deepseek-harness.sh
-```
-
-> 该命令会先校验脚本本身。安装完成后，仍请按住 Control 点击应用并选择「打开」。
+> 发布后请只从同一条 Release 的说明中复制命令与 SHA-256，避免脚本版本和 DMG 不匹配。安装完成后，仍请按住 Control 点击应用并选择「打开」。
 
 ### 🪟 Windows：安装
 
@@ -175,14 +170,14 @@ npm run dist:mac
 
 ### 🪟 构建 Windows 安装包
 
-在 macOS 或 Windows 的项目根目录运行：
+必须在 **Windows x64** 机器或 Windows x64 GitHub Actions runner 中运行：
 
 ```sh
 npm ci
 npm run package:win
 ```
 
-产物位于 `dist/`，为 x64 NSIS 安装程序。Windows 上可直接完整验证安装；其他系统上的交叉构建只验证打包链路，建议仍在 Windows 机器上进行最终安装验收。
+产物位于 `dist/`，为 x64 NSIS 安装程序。不要发布在 macOS 上交叉构建出的 `.exe`：它可能缺少 Windows 原生依赖。仓库的 `Verify desktop builds` 工作流会在 Windows 上执行 `npm ci`、测试与安装包构建；正式发布前仍应在 Windows 10/11 实机安装验证。
 
 ### ✅ 自动测试
 
@@ -204,7 +199,7 @@ npm test
 
 ## 📈 项目动态
 
-[![GitHub Stars](https://img.shields.io/github/stars/wangjicheng2004/dsh-desktop?style=flat&logo=github)](https://github.com/wangjicheng2004/dsh-desktop/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/u7-u7/dsh-desktop?style=flat&logo=github)](https://github.com/u7-u7/dsh-desktop/stargazers)
 
 <img src="assets/star-history.svg" alt="DeepSeek Harness Star 趋势图" />
 

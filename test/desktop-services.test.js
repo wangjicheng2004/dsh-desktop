@@ -212,6 +212,21 @@ test("ships the dsh-web-ui catalog without its external-script trading skin", as
   assert.doesNotMatch(services, /"trading"/);
 });
 
+test("pins desktop builds to a supported Node version and verifies Windows on Windows", async () => {
+  const root = path.join(__dirname, "..");
+  const manifest = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
+  const installer = await fs.readFile(path.join(root, "install.ps1"), "utf8");
+  const workflow = await fs.readFile(path.join(root, ".github", "workflows", "verify-desktop-builds.yml"), "utf8");
+
+  assert.equal(manifest.engines.node, ">=22.19.0");
+  assert.match(installer, /Node\.js 22\.19\.0 or later/);
+  assert.match(installer, /npm\.cmd ci/);
+  assert.match(workflow, /runs-on: windows-latest/);
+  assert.match(workflow, /npm run package:win/);
+  assert.match(workflow, /runs-on: macos-14/);
+  assert.match(workflow, /npm run package:mac/);
+});
+
 test("activates a trusted DSH plugin skin through the web profile", async () => {
   await withTemporaryHome(async (dshHome) => {
     const source = path.join(dshHome, "trusted-skin");

@@ -4,7 +4,7 @@ set -euo pipefail
 
 readonly VERSION="1.0.4"
 readonly DMG_NAME="DeepSeek Harness-${VERSION}-mac-arm64.dmg"
-readonly DMG_URL="https://github.com/wangjicheng2004/dsh-desktop/releases/download/v${VERSION}/${DMG_NAME}"
+readonly DMG_URL="https://github.com/u7-u7/dsh-desktop/releases/download/v${VERSION}/DeepSeek%20Harness-${VERSION}-mac-arm64.dmg"
 readonly DMG_SHA256="328f4fe8a5221d9039df02ee8e19c08d7a2e11447a2aaa2ab0bc2ea2bbfa819f"
 readonly APP_NAME="DeepSeek Harness.app"
 

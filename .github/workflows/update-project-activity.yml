@@ -24,12 +24,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.19.0
 
       - name: Fetch the current Star count
         env:
           GH_TOKEN: ${{ github.token }}
-        run: echo "STAR_COUNT=$(gh api repos/wangjicheng2004/dsh-desktop --jq .stargazers_count)" >> "$GITHUB_ENV"
+        run: echo "STAR_COUNT=$(gh api repos/u7-u7/dsh-desktop --jq .stargazers_count)" >> "$GITHUB_ENV"
 
       - name: Generate charts
         run: node scripts/generate-project-activity.mjs --stars "$STAR_COUNT"

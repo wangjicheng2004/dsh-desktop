@@ -3,6 +3,9 @@
   "version": "1.0.4",
   "description": "DeepSeek Harness desktop wrapper: bundled server + UI with tray",
   "main": "main.js",
+  "engines": {
+    "node": ">=22.19.0"
+  },
   "scripts": {
     "start": "electron .",
     "test": "node --test",
