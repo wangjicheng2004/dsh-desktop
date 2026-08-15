@@ -58,8 +58,8 @@
 适合 Finder 安装不顺利、但愿意使用终端的用户。它会下载固定版本、校验脚本与 DMG 的 SHA-256、安装到 `~/Applications`，不会要求管理员密码、覆盖旧应用或修改 Gatekeeper 设置。
 
 ```sh
-curl -fL -o /tmp/install-deepseek-harness.sh https://github.com/wangjicheng2004/dsh-desktop/releases/download/v1.0.3/install-macos-v1.0.3.sh
-echo '576e3a45dcf1c72f2bfcb94fa0d4c289952ddac40ae63684fdada271ee1c967f  /tmp/install-deepseek-harness.sh' | shasum -a 256 -c && bash /tmp/install-deepseek-harness.sh
+curl -fL -o /tmp/install-deepseek-harness.sh https://github.com/wangjicheng2004/dsh-desktop/releases/download/v1.0.4/install-macos-v1.0.4.sh
+echo '46fef8b95555669603b6ad46d3d9f6dfe22c1539ff8dcdce708863bd7028f4eb  /tmp/install-deepseek-harness.sh' | shasum -a 256 -c && bash /tmp/install-deepseek-harness.sh
 ```
 
 > 该命令会先校验脚本本身。安装完成后，仍请按住 Control 点击应用并选择「打开」。

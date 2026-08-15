@@ -2,10 +2,10 @@
 # Installs one pinned, hash-verified release without weakening Gatekeeper.
 set -euo pipefail
 
-readonly VERSION="1.0.3"
-readonly DMG_NAME="DeepSeek.Harness-${VERSION}-mac-arm64.dmg"
+readonly VERSION="1.0.4"
+readonly DMG_NAME="DeepSeek Harness-${VERSION}-mac-arm64.dmg"
 readonly DMG_URL="https://github.com/wangjicheng2004/dsh-desktop/releases/download/v${VERSION}/${DMG_NAME}"
-readonly DMG_SHA256="c0e06714e0bcf24973eafecd30def5a4fc86898f9fe0aabaf06cd8076fa36e7f"
+readonly DMG_SHA256="328f4fe8a5221d9039df02ee8e19c08d7a2e11447a2aaa2ab0bc2ea2bbfa819f"
 readonly APP_NAME="DeepSeek Harness.app"
 
 install_dir="${DSH_INSTALL_DIR:-$HOME/Applications}"
