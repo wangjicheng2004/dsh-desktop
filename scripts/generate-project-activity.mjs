@@ -12,6 +12,10 @@ const STAR_SVG_PATH = path.join(ASSETS_DIR, 'star-history.svg');
 const COMMIT_SVG_PATH = path.join(ASSETS_DIR, 'commit-activity.svg');
 const REPOSITORY = 'wangjicheng2004/dsh-desktop';
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+const ACTIVITY_DAYS = 7;
+const ACTIVITY_BUCKET_HOURS = 2;
+const BEIJING_OFFSET_MS = 8 * HOUR_MS;
 const COMMIT_COLORS = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'];
 
 function escapeXml(value) {
@@ -107,44 +111,94 @@ ${series}
 `;
 }
 
+function activityDate(date) {
+  return new Date(date.getTime() + BEIJING_OFFSET_MS);
+}
+
+function activityDateKey(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function startOfActivityBucket(date) {
+  const local = activityDate(date);
+  return new Date(Date.UTC(
+    local.getUTCFullYear(),
+    local.getUTCMonth(),
+    local.getUTCDate(),
+    Math.floor(local.getUTCHours() / ACTIVITY_BUCKET_HOURS) * ACTIVITY_BUCKET_HOURS,
+  ));
+}
+
+function activityBucketKey(bucket) {
+  return `${activityDateKey(bucket)}T${String(bucket.getUTCHours()).padStart(2, '0')}`;
+}
+
+function activityBucketKeyForCommit(date) {
+  return activityBucketKey(startOfActivityBucket(date));
+}
+
+function formatActivityBucket(bucket) {
+  const startHour = bucket.getUTCHours();
+  const endHour = (startHour + ACTIVITY_BUCKET_HOURS) % 24;
+  return `${activityDateKey(bucket)} ${String(startHour).padStart(2, '0')}:00–${String(endHour).padStart(2, '0')}:00 GMT+8`;
+}
+
 function commitCounts() {
-  const output = execFileSync('git', ['log', '--format=%cs', 'HEAD'], { cwd: ROOT_DIR, encoding: 'utf8' });
-  return output.trim().split('\n').filter(Boolean).reduce((counts, date) => {
-    counts.set(date, (counts.get(date) ?? 0) + 1);
+  const output = execFileSync('git', ['log', '--format=%cI', 'HEAD'], { cwd: ROOT_DIR, encoding: 'utf8' });
+  return output.trim().split('\n').filter(Boolean).reduce((counts, timestamp) => {
+    const key = activityBucketKeyForCommit(new Date(timestamp));
+    counts.set(key, (counts.get(key) ?? 0) + 1);
     return counts;
   }, new Map());
 }
 
 function renderCommitActivity(counts) {
-  const today = startOfUtcDay(new Date());
-  const end = addDays(today, 6 - today.getUTCDay());
-  const start = addDays(end, -(53 * 7 - 1));
-  const cell = 11;
-  const gap = 3;
-  const left = 44;
-  const top = 34;
-  const width = left + 53 * (cell + gap) + 12;
-  const height = top + 7 * (cell + gap) + 38;
+  const slotsPerDay = 24 / ACTIVITY_BUCKET_HOURS;
+  const latestBucket = startOfActivityBucket(new Date());
+  const latestDay = new Date(Date.UTC(
+    latestBucket.getUTCFullYear(),
+    latestBucket.getUTCMonth(),
+    latestBucket.getUTCDate(),
+  ));
+  const start = new Date(latestDay.getTime() - (ACTIVITY_DAYS - 1) * DAY_MS);
+  const cell = 20;
+  const gap = 5;
+  const left = 78;
+  const top = 46;
+  const width = left + slotsPerDay * (cell + gap) + 20;
+  const height = top + ACTIVITY_DAYS * (cell + gap) + 30;
   const maximum = Math.max(1, ...counts.values());
   const cells = [];
+  const timeLabels = [];
+  const dateLabels = [];
 
-  for (let offset = 0; offset < 53 * 7; offset += 1) {
-    const date = addDays(start, offset);
-    const count = counts.get(dateKey(date)) ?? 0;
-    const level = count === 0 ? 0 : Math.min(4, Math.ceil((count / maximum) * 4));
-    const week = Math.floor(offset / 7);
-    const day = offset % 7;
-    const x = left + week * (cell + gap);
-    const y = top + day * (cell + gap);
-    cells.push(`<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2" fill="${COMMIT_COLORS[level]}"><title>${dateKey(date)}: ${count} commits</title></rect>`);
+  for (let slot = 0; slot < slotsPerDay; slot += 1) {
+    const hour = slot * ACTIVITY_BUCKET_HOURS;
+    const x = left + slot * (cell + gap) + cell / 2;
+    timeLabels.push(`<text x="${x}" y="${top - 12}" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="10" fill="#57606a">${String(hour).padStart(2, '0')}</text>`);
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="本仓库最近一年的提交活跃度">
+  for (let day = 0; day < ACTIVITY_DAYS; day += 1) {
+    const dayStart = new Date(start.getTime() + day * 24 * HOUR_MS);
+    const y = top + day * (cell + gap) + cell / 2 + 4;
+    dateLabels.push(`<text x="${left - 9}" y="${y}" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="10" fill="#57606a">${activityDateKey(dayStart).slice(5)}</text>`);
+
+    for (let slot = 0; slot < slotsPerDay; slot += 1) {
+      const bucket = new Date(dayStart.getTime() + slot * ACTIVITY_BUCKET_HOURS * HOUR_MS);
+      const count = counts.get(activityBucketKey(bucket)) ?? 0;
+      const level = count === 0 ? 0 : Math.min(4, Math.ceil((count / maximum) * 4));
+      const x = left + slot * (cell + gap);
+      const rectY = top + day * (cell + gap);
+      cells.push(`<rect x="${x}" y="${rectY}" width="${cell}" height="${cell}" rx="3" fill="${COMMIT_COLORS[level]}"><title>${formatActivityBucket(bucket)}: ${count} commits</title></rect>`);
+    }
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="本仓库最近 7 天按北京时间每两小时统计的提交活跃度">
   <rect width="100%" height="100%" rx="8" fill="#ffffff" stroke="#d0d7de"/>
-  <text x="${left}" y="22" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#24292f">🟩 提交活跃度（最近 53 周）</text>
-  <text x="8" y="${top + 10}" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="10" fill="#57606a">日</text>
-  <text x="4" y="${top + 3 * (cell + gap) + 10}" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="10" fill="#57606a">三</text>
-  <text x="4" y="${top + 6 * (cell + gap) + 10}" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="10" fill="#57606a">六</text>
+  <text x="${left}" y="22" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#24292f">🟩 提交活跃度（最近 7 天 · 每格 2 小时）</text>
+  <text x="${left}" y="36" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="10" fill="#57606a">北京时间（GMT+8）</text>
+  ${timeLabels.join('')}
+  ${dateLabels.join('')}
   ${cells.join('')}
 </svg>
 `;

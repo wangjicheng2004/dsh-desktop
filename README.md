@@ -8,6 +8,8 @@
 
 <img width="2301" height="1555" alt="DeepSeek Harness 客户端" src="https://github.com/user-attachments/assets/d4c290a8-13f2-4f2a-a658-8bef6ea6a2e4" />
 
+<img width="2560" height="1846" alt="DeepSeek Harness：一键切换 Blue Fantasy 外观皮肤" src="assets/skin-switching-preview.png" />
+
 <img width="409" height="203" alt="DeepSeek Harness 状态栏" src="https://github.com/user-attachments/assets/b5515b50-5e6c-4378-8fe4-6bee53474bf2" />
 
 ## ✨ 特性
@@ -20,7 +22,7 @@
 | 日志排错 | 启动过程写入 `dsh.log`，方便定位问题。 |
 | 技能 | 左栏入口，可通过对话式 `skill-creator` 在当前项目创建并调用 Skill。 |
 | API 用量 | 左栏入口，查询 DeepSeek 账号当前余额。 |
-| 皮肤 | 左栏入口，可导入、一键切换 CSS 或受信任的 DSH 插件皮肤。 |
+| 一键换肤 | 左栏入口，可一键导入、启用和恢复外观皮肤；精选皮肤基于 [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui)。 |
 | 独立 Mac 应用 | macOS DMG 内置 DSH 和运行时，无需安装 Node.js、npm 或全局 `dsh`。 |
 | Windows 安装包 | 可构建 x64 NSIS `.exe` 安装程序。 |
 
@@ -110,14 +112,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File create-shortcut.ps1
 | 左栏 → 技能 | 点击“开始创建 Skill”复制 `/skill-creator`，在对话中说明需求。创建器会确认需求后默认把新 Skill 写入当前项目 `.dsh/skills`；没有本地工作区时才写入本机 DSH Home。随后在输入框键入 `/` 调用。 |
 | 首次配置 | API 地址留空即使用 DeepSeek 官方地址；使用中转站时填写其 OpenAI 兼容根地址（可含 `/v1`，不要填写 `/chat/completions`）。 |
 | 左栏 → API 用量 | 查询当前 DeepSeek 账号余额；密钥只在 Electron 主进程中读取，不会暴露给网页。 |
-| 左栏 → 皮肤 | 导入 CSS 后点击“一键使用”立即切换；页面内提供 Deep Whale 导入教程、恢复默认按钮与可信来源提示。DSH 插件皮肤启用时会重启服务。 |
+| 左栏 → 皮肤 | 可一键导入并启用精选的 [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui) 外观皮肤，也可导入 CSS 或可信 DSH 插件皮肤。切换插件皮肤时应用会自动重启 DSH。 |
 
 > DeepSeek 公开接口提供的是账号余额，而非单个 API Key 的实时历史用量；按 Key 的明细需要到开放平台 Usage 页面导出。详见 [余额接口文档](https://api-docs.deepseek.com/zh-cn/api/get-user-balance) 与 [官方 FAQ](https://api-docs.deepseek.com/faq)。
 
 ### 🎨 皮肤安全说明
 
+- **精选外观皮肤**：客户端提供基于 [zhu1090093659/dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui) 的可选皮肤。选择后才会下载、导入并启用，不会在未确认时自动执行。
 - **CSS 皮肤**：只包含样式，可直接导入并即时切换。
 - **DSH 插件皮肤**：兼容 [dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 这类带有 `skin.json`、`package.json`、`cordis.patch.yml` 和 `lib/client.js` 的包。它们会执行自带客户端脚本，务必仅导入可信来源；启用时会写入本地 web profile 并重启 DSH。
+- **许可与信任**：不同皮肤及其素材可能采用不同许可证。导入、分发或二次修改前，请查看所选皮肤目录中的 `LICENSE` 和 `package.json`；DSH 插件会执行客户端脚本，只应启用可信来源。
 - 皮肤及状态保存在应用自身的 DSH Home 中：macOS 位于 `~/Library/Application Support/dsh-desktop/dsh`，Windows 位于 `%APPDATA%\\dsh-desktop\\dsh`。
 
 ## 🔧 排错
@@ -196,6 +200,7 @@ npm test
 
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 - [Electron](https://www.electronjs.org/)
+- [dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui)（精选外观皮肤来源）
 
 ## 📈 项目动态
 
@@ -205,4 +210,4 @@ npm test
 
 <img src="assets/commit-activity.svg" alt="DeepSeek Harness 仓库提交活跃度热力图" />
 
-> 图表每天由 GitHub Actions 更新：Star 趋势仅统计本仓库；绿色方块仅统计本仓库的提交。Star 历史从图表启用当天开始记录。
+> 图表每天由 GitHub Actions 更新：Star 趋势仅统计本仓库；提交活跃度按北京时间统计最近 7 天，每个绿色方块代表一个两小时提交时段。Star 历史从图表启用当天开始记录。
