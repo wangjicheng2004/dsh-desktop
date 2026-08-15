@@ -203,7 +203,6 @@ function renderCommitActivity(counts) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="本仓库最近 7 天按北京时间每两小时统计的提交活跃度">
   <rect width="100%" height="100%" rx="8" fill="#ffffff" stroke="#d0d7de"/>
   <text x="${left}" y="22" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#24292f">🟩 提交活跃度（最近 7 天 · 每格 2 小时）</text>
-  <text x="${left}" y="36" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="10" fill="#57606a">北京时间（GMT+8）</text>
   ${timeLabels.join('')}
   ${dateLabels.join('')}
   ${cells.join('')}

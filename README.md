@@ -198,5 +198,3 @@ npm test
 <img src="assets/star-history.svg" alt="DeepSeek Harness Star 趋势图" />
 
 <img src="assets/commit-activity.svg" alt="DeepSeek Harness 仓库提交活跃度热力图" />
-
-> 图表由本地脚本生成并随常规提交更新；GitHub Actions 每天会生成可下载的图表产物，但不会写回仓库。Star 趋势仅统计本仓库；提交活跃度按北京时间统计最近 7 天，每个绿色色块代表一个两小时提交时段。Star 历史从图表启用当天开始记录。
