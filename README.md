@@ -4,13 +4,7 @@
 
 ## 🖼️ 参考图片
 
-<img width="145" height="147" alt="DeepSeek Harness 图标" src="https://github.com/user-attachments/assets/4fca8e3b-e5a3-4a5e-8dc8-9973c14f1dc3" />
-
 <img width="2560" height="1712" alt="DeepSeek Harness 客户端" src="assets/readme-client-preview.png" />
-
-<img width="2560" height="1846" alt="DeepSeek Harness：一键切换 Blue Fantasy 外观皮肤" src="assets/skin-switching-preview.png" />
-
-<img width="409" height="203" alt="DeepSeek Harness 状态栏" src="https://github.com/user-attachments/assets/b5515b50-5e6c-4378-8fe4-6bee53474bf2" />
 
 ## ✨ 特性
 
