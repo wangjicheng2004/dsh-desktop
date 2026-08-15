@@ -5,6 +5,7 @@ node_modules/
 dsh.log
 .sessions/
 *.session.jsonl
+.dsh/
 
 # Build output
 dist/
