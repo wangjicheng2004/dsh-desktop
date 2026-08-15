@@ -37,7 +37,7 @@
 
 > 仅支持 Apple 芯片；暂不支持 Intel Mac。首次运行不需要安装 Node.js 或 `dsh`。
 
-1. 在 [GitHub Releases](https://github.com/wangjicheng2004/dsh-desktop/releases) 下载最新的 `DeepSeek Harness-*-mac-arm64.dmg`。不要下载 `Source code (zip)`，它不能直接安装。
+1. 在 [DeepSeek Harness macOS DMG 安装包下载页](https://github.com/wangjicheng2004/dsh-desktop/releases) 下载最新的 `DeepSeek Harness-*-mac-arm64.dmg`。不要下载 `Source code (zip)`，它不能直接安装。
 2. 双击 DMG，把 **DeepSeek Harness** 拖入「应用程序（Applications）」，复制完成后弹出磁盘镜像。
 3. 从「应用程序」启动 **DeepSeek Harness**。首次启动约需 5–10 秒。
 
