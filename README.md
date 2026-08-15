@@ -6,7 +6,7 @@
 
 <img width="145" height="147" alt="DeepSeek Harness 图标" src="https://github.com/user-attachments/assets/4fca8e3b-e5a3-4a5e-8dc8-9973c14f1dc3" />
 
-<img width="2301" height="1555" alt="DeepSeek Harness 客户端" src="https://github.com/user-attachments/assets/d4c290a8-13f2-4f2a-a658-8bef6ea6a2e4" />
+<img width="2560" height="1712" alt="DeepSeek Harness 客户端" src="assets/readme-client-preview.png" />
 
 <img width="2560" height="1846" alt="DeepSeek Harness：一键切换 Blue Fantasy 外观皮肤" src="assets/skin-switching-preview.png" />
 
