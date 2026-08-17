@@ -285,6 +285,9 @@ function createWindow() {
     height: 860,
     title: "DeepSeek Harness",
     autoHideMenuBar: true,
+    // Let the web UI extend through the macOS title bar while retaining the
+    // native traffic-light controls, so the default white title strip is gone.
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     icon: iconPath(),
     webPreferences: {
       preload: path.join(__dirname, "desktop-preload.js"),

@@ -232,6 +232,7 @@ test("pins desktop builds to a supported Node version and verifies Windows on Wi
   assert.doesNotMatch(JSON.stringify(manifest.build.extraResources), /"from":"node_modules"/);
   assert.doesNotMatch(manifest.build.files.join("\n"), /!node_modules\/\*\*\/\*/);
   assert.match(main, /app\.getAppPath\(\).*node_modules/s);
+  assert.match(main, /titleBarStyle:\s*process\.platform === "darwin" \? "hiddenInset" : "default"/);
 });
 
 test("activates a trusted DSH plugin skin through the web profile", async () => {
