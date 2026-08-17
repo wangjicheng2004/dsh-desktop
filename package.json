@@ -32,8 +32,7 @@
     "productName": "DeepSeek Harness",
     "asar": true,
     "asarUnpack": [
-      "node_modules/@deepseek-ai/dsh-host-directory-picker-native/lib/worker.cjs",
-      "node_modules/@koromix/koffi-win32-*/**"
+      "node_modules/**/*"
     ],
     "files": [
       "main.js",

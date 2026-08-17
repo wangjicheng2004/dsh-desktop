@@ -229,9 +229,10 @@ test("pins desktop builds to a supported Node version and verifies Windows on Wi
   assert.match(workflow, /npm run package:win -- --publish never/);
   assert.match(workflow, /npm run package:mac -- --publish never/);
   assert.match(workflow, /ulimit -n 65536/);
+  assert.equal(manifest.build.asar, true);
+  assert.deepEqual(manifest.build.asarUnpack, ["node_modules/**/*"]);
   assert.doesNotMatch(JSON.stringify(manifest.build.extraResources), /"from":"node_modules"/);
-  assert.doesNotMatch(manifest.build.files.join("\n"), /!node_modules\/\*\*\/\*/);
-  assert.match(main, /app\.getAppPath\(\).*node_modules/s);
+  assert.match(main, /app\.asar\.unpacked.*node_modules/s);
   assert.match(main, /titleBarStyle:\s*process\.platform === "darwin" \? "hiddenInset" : "default"/);
 });
 
