@@ -77,11 +77,15 @@ function resolveDshCommands() {
   const candidates = [];
   const localBin = bundledDshBin();
   if (fs.existsSync(localBin)) {
+    // The native Windows directory picker loads koffi in a child process.
+    // Running DSH under Electron's embedded Node can use a different Node ABI
+    // from koffi's prebuilt binary, causing that worker to exit immediately.
+    const systemNode = process.platform === "win32" && !app.isPackaged ? resolveCommand("node") : null;
     candidates.push({
-      cmd: process.execPath,
+      cmd: systemNode || process.execPath,
       args: [localBin, "web"],
       label: app.isPackaged ? "bundled dsh" : "local dsh",
-      env: { ELECTRON_RUN_AS_NODE: "1" },
+      env: systemNode ? {} : { ELECTRON_RUN_AS_NODE: "1" },
     });
   }
   if (app.isPackaged) return candidates;

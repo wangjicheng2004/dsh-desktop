@@ -9,6 +9,7 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test",
+    "postinstall": "node scripts/patch-directory-picker.mjs",
     "package:mac": "electron-builder --mac dir --arm64",
     "dist:mac": "electron-builder --mac dmg --arm64",
     "package:win": "electron-builder --win nsis --x64",
@@ -30,6 +31,10 @@
     "appId": "com.deepseek.harness.desktop",
     "productName": "DeepSeek Harness",
     "asar": true,
+    "asarUnpack": [
+      "node_modules/@deepseek-ai/dsh-host-directory-picker-native/lib/worker.cjs",
+      "node_modules/@koromix/koffi-win32-*/**"
+    ],
     "files": [
       "main.js",
       "desktop-preload.js",
