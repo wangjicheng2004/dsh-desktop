@@ -60,8 +60,36 @@ function bundledSkillDirectory() {
   return app.isPackaged ? path.join(process.resourcesPath, "bundled-skills") : path.join(__dirname, "bundled-skills");
 }
 
-function bundledPluginDirectory() {
-  return app.isPackaged ? path.join(process.resourcesPath, "bundled-plugins", "git-branch") : path.join(__dirname, "bundled-plugins", "git-branch");
+function bundledRuntimePackageDirectory(packageName) {
+  const nodeModules = app.isPackaged
+    ? path.join(process.resourcesPath, "app.asar.unpacked", "node_modules")
+    : path.join(__dirname, "node_modules");
+  return path.join(nodeModules, ...packageName.split("/"));
+}
+
+function resolveRuntimeDependency(packageRoot, packageName) {
+  try {
+    return path.dirname(require.resolve(`${packageName}/package.json`, { paths: [packageRoot] }));
+  } catch {
+    // Some ESM packages intentionally do not export package.json. Resolve
+    // their public entry point instead, then walk back to the matching root.
+    let cursor;
+    try {
+      cursor = path.dirname(require.resolve(packageName, { paths: [packageRoot] }));
+    } catch {
+      throw new Error(`桌面插件缺少运行依赖 ${packageName}。请重新安装或重新构建客户端。`);
+    }
+    while (true) {
+      const manifest = path.join(cursor, "package.json");
+      try {
+        if (JSON.parse(fs.readFileSync(manifest, "utf8")).name === packageName) return cursor;
+      } catch {}
+      const parent = path.dirname(cursor);
+      if (parent === cursor) break;
+      cursor = parent;
+    }
+    throw new Error(`无法定位桌面插件依赖 ${packageName} 的安装目录。`);
+  }
 }
 
 function resolveCommand(command) {
@@ -249,34 +277,75 @@ async function restartDshService() {
   }
 }
 
-async function ensureGitBranchPlugin() {
-  const source = bundledPluginDirectory();
-  const sourceManifest = path.join(source, "package.json");
-  const profileRoot = path.join(dshHomePath(), "profiles", "web");
-  const profileManifest = path.join(profileRoot, "package.json");
-  if (!fs.existsSync(sourceManifest) || !fs.existsSync(profileManifest)) return false;
-  const sourcePackage = JSON.parse(await fsp.readFile(sourceManifest, "utf8"));
-  const target = path.join(profileRoot, "node_modules", "@dsh-desktop", "git-branch");
+async function readPackageManifest(packageRoot) {
+  try {
+    return JSON.parse(await fsp.readFile(path.join(packageRoot, "package.json"), "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+async function syncProfilePackage(profileRoot, source, visited = new Set()) {
+  const sourcePackage = await readPackageManifest(source);
+  if (!sourcePackage?.name) return null;
+  if (visited.has(sourcePackage.name)) return { name: sourcePackage.name, changed: false };
+  visited.add(sourcePackage.name);
+
+  const target = path.join(profileRoot, "node_modules", ...sourcePackage.name.split("/"));
   let installedVersion = null;
   try { installedVersion = JSON.parse(await fsp.readFile(path.join(target, "package.json"), "utf8")).version; } catch {}
-  const profile = JSON.parse(await fsp.readFile(profileManifest, "utf8"));
-  const bundles = profile.dsh?.profile?.bundles || [];
-  const packageName = sourcePackage.name;
-  const needsCopy = installedVersion !== sourcePackage.version;
-  const needsBundle = !bundles.includes(packageName);
-  if (!needsCopy && !needsBundle) return false;
-
-  if (needsCopy) {
+  if (installedVersion !== sourcePackage.version) {
     await fsp.rm(target, { recursive: true, force: true });
     await fsp.mkdir(path.dirname(target), { recursive: true });
     await fsp.cp(source, target, { recursive: true, dereference: false });
+    log(`已安装桌面客户端插件 ${sourcePackage.name} ${sourcePackage.version}`);
   }
+
+  // A DSH profile lives under Application Support. Its ESM/CJS resolver
+  // cannot climb into the app's unpacked node_modules, so copy the complete
+  // production dependency closure beside every bundled plugin.
+  let dependenciesChanged = false;
+  for (const dependencyName of Object.keys(sourcePackage.dependencies || {})) {
+    const dependency = await syncProfilePackage(profileRoot, resolveRuntimeDependency(source, dependencyName), visited);
+    dependenciesChanged ||= Boolean(dependency?.changed);
+  }
+  return { name: sourcePackage.name, changed: installedVersion !== sourcePackage.version || dependenciesChanged };
+}
+
+async function ensureDesktopClientPlugins() {
+  const profileRoot = path.join(dshHomePath(), "profiles", "web");
+  const profileManifest = path.join(profileRoot, "package.json");
+  if (!fs.existsSync(profileManifest)) return false;
+  const profile = JSON.parse(await fsp.readFile(profileManifest, "utf8"));
+  const bundles = profile.dsh?.profile?.bundles || [];
+  // The task board imports this host provider at runtime, although the
+  // upstream package currently declares it as a development dependency.
+  const sources = [
+    { source: bundledRuntimePackageDirectory("@deepseek-ai/dsh-settings"), bundle: false },
+    { source: bundledRuntimePackageDirectory("@linxin666/dsh-client-ui-task-board"), bundle: true },
+    { source: bundledRuntimePackageDirectory("@linxin666/dsh-client-ui-git-graph"), bundle: true },
+  ];
+  const packageNames = [];
+  let changed = false;
+
+  for (const { source, bundle } of sources) {
+    const result = await syncProfilePackage(profileRoot, source);
+    if (!result?.name) continue;
+    if (bundle) packageNames.push(result.name);
+    changed ||= result.changed;
+  }
+
+  // Git graph owns the branch entry now. Remove the former lightweight chip
+  // so the workspace keeps one coherent Git control.
+  const retiredPackages = new Set(["@dsh-desktop/git-branch"]);
+  const managedPackages = new Set([...packageNames, ...retiredPackages]);
+  const nextBundles = [...bundles.filter((item) => !managedPackages.has(item)), ...packageNames];
+  if (nextBundles.length === bundles.length && nextBundles.every((item, index) => item === bundles[index])) return changed;
   const nextProfile = {
     ...profile,
-    dsh: { ...profile.dsh, profile: { ...profile.dsh?.profile, bundles: [...bundles.filter((item) => item !== packageName), packageName] } },
+    dsh: { ...profile.dsh, profile: { ...profile.dsh?.profile, bundles: nextBundles } },
   };
   await fsp.writeFile(profileManifest, `${JSON.stringify(nextProfile, null, 2)}\n`);
-  log(`已安装 Git 分支客户端插件 ${sourcePackage.version}`);
   return true;
 }
 
@@ -375,6 +444,11 @@ app.whenReady().then(async () => {
   registerDesktopIpc();
   createTray();
 
+  // Repair an existing profile before DSH loads it. Waiting until the web
+  // server responds is too late: a missing plugin dependency can make DSH exit
+  // during profile boot and prevent the repair from ever running.
+  await ensureDesktopClientPlugins();
+
   if (await waitForServer(3000)) {
     dshServiceReady = true;
     log("检测到已有 DSH 服务，直接连接；不会接管其重启生命周期");
@@ -397,7 +471,7 @@ app.whenReady().then(async () => {
 
   // The web profile is created by the first DSH launch, so install our client
   // bundle afterwards and then restart the process we own exactly once.
-  if (await ensureGitBranchPlugin()) await restartDshService();
+  if (await ensureDesktopClientPlugins()) await restartDshService();
   log("服务就绪，打开窗口");
   showWindow();
 });

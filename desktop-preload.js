@@ -36,11 +36,17 @@ function escapeHtml(value) {
 
 function injectDesktopPages() {
   if (document.getElementById("dsh-desktop-workbench")) return;
+  // hiddenInset removes the native draggable strip on macOS. Reuse the web
+  // app's existing header surfaces so controls remain clickable while the
+  // blank chrome around them can still move the window.
+  if (navigator.userAgent.includes("Macintosh")) {
+    document.documentElement.dataset.dshDesktopMacOs = "";
+  }
 
   const pages = {
-    skills: { icon: "✦" },
-    usage: { icon: "◉" },
-    skins: { icon: "◐" },
+    skills: { icon: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="m8 1.7.9 4.4L13.3 7l-4.4.9L8 12.3l-.9-4.4L2.7 7l4.4-.9L8 1.7Z"/><path d="m12.3 11.2.35 1.75 1.75.35-1.75.35-.35 1.75-.35-1.75-1.75-.35 1.75-.35.35-1.75Z"/></svg>' },
+    usage: { icon: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="8" cy="8" r="5.8"/><circle cx="8" cy="8" r="2.4"/></svg>' },
+    skins: { icon: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M8 1.8a6.2 6.2 0 1 0 0 12.4c1.1 0 1.5-.7 1.5-1.3 0-.7-.5-1.1-1.1-1.1H7.2a1.7 1.7 0 0 1 0-3.4h2.5a2.6 2.6 0 0 0 0-5.2H8Z"/><circle cx="5.3" cy="5.6" r=".6" fill="currentColor" stroke="none"/><circle cx="7.8" cy="4.3" r=".6" fill="currentColor" stroke="none"/></svg>' },
   };
   const dshWebUiSkins = [
     ["qq98", "QQ2008 怀旧版", "QQ2008 Retro"],
@@ -77,13 +83,15 @@ function injectDesktopPages() {
   const style = document.createElement("style");
   style.textContent = `
     #dsh-desktop-nav,#dsh-desktop-workbench{font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--dsw-alias-label-primary,#eef2f7)}
-    #dsh-desktop-nav{display:grid;gap:3px;margin:8px 12px}#dsh-desktop-nav button{align-items:center;background:transparent;border:0;border-radius:9px;color:var(--dsw-alias-label-primary,#eef2f7);cursor:pointer;display:flex;gap:10px;padding:10px 12px;text-align:left;width:100%}#dsh-desktop-nav button:hover,#dsh-desktop-nav button[aria-current="page"]{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.09))}#dsh-desktop-nav button[aria-current="page"]{color:var(--dsw-alias-state-business-primary,#66adff)}.dshdc-nav-icon{align-items:center;border:1px solid currentColor;border-radius:6px;display:inline-flex;font-size:16px;font-weight:700;height:22px;justify-content:center;line-height:1;width:22px}#dsh-desktop-nav button[data-page="usage"] .dshdc-nav-icon{border-color:#111;color:#111}body[data-ds-dark-theme] #dsh-desktop-nav button[data-page="usage"] .dshdc-nav-icon{border-color:#fff;color:#fff}.dshdc-nav-label{font-weight:600}
+    #dsh-desktop-nav{display:grid;gap:3px;margin:0 0 6px;min-width:0;overflow:hidden}#dsh-desktop-nav button{align-items:center;background:transparent;border:0;border-radius:8px;color:var(--dsw-alias-label-secondary,#9da7b5);cursor:pointer;display:flex;font:13px/1.2 var(--dsw-font-family,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);gap:8px;height:32px;min-width:0;padding:0 12px;text-align:left;width:100%}#dsh-desktop-nav button:hover{background:var(--dsw-specific-sidebar-nav-item-hover,var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.09)));color:var(--dsw-alias-label-primary,#eef2f7)}#dsh-desktop-nav button[aria-current="page"]{background:var(--dsw-specific-sidebar-nav-item-active,var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.09)));color:var(--dsw-alias-label-primary,#eef2f7);font-weight:600}.dshdc-nav-icon{align-items:center;display:inline-flex;flex:none;font-size:16px;height:16px;justify-content:center;line-height:1;width:16px}.dshdc-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}[data-dsh-frame][data-sidebar-collapsed] #dsh-desktop-nav button{justify-content:center;padding:0}[data-dsh-frame][data-sidebar-collapsed] .dshdc-nav-label{display:none}
     #dsh-desktop-workbench{background:var(--dsw-alias-bg-base,#111214);box-sizing:border-box;display:block;min-height:100%;overflow:auto;padding:42px 48px 72px;width:100%}#dsh-desktop-workbench[hidden]{display:none}#dsh-desktop-workbench button{font:inherit}#dsh-desktop-workbench button:not(:disabled){cursor:pointer}#dsh-desktop-workbench button:disabled{cursor:not-allowed;opacity:.58}
     .dshdc-shell{margin:0 auto;max-width:1040px}.dshdc-hero{align-items:flex-start;border-bottom:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,.12));display:flex;gap:24px;justify-content:space-between;padding:0 0 28px}.dshdc-eyebrow{color:var(--dsw-alias-label-secondary,#9da7b5);font-size:12px;letter-spacing:.08em;margin:0 0 8px;text-transform:uppercase}.dshdc-hero h1{font-size:32px;letter-spacing:-.03em;line-height:1.15;margin:0}.dshdc-hero p{color:var(--dsw-alias-label-secondary,#9da7b5);margin:9px 0 0}.dshdc-back{background:transparent;border:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,.18));border-radius:8px;color:inherit;padding:8px 11px;white-space:nowrap}.dshdc-back:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.09))}
     .dshdc-onboarding-field{display:grid;gap:6px;margin-top:12px}.dshdc-onboarding-label{font-size:14px;font-weight:600}.dshdc-onboarding-input{background:transparent;border:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,.18));border-radius:8px;box-sizing:border-box;color:inherit;font:inherit;padding:10px 12px;width:100%}.dshdc-onboarding-hint{color:var(--dsw-alias-label-secondary,#9da7b5);font-size:12px;margin:0}.dshdc-onboarding-warning{color:#e7bc70;font-size:12px;margin:0}.dshdc-onboarding-error{color:var(--dsw-alias-state-error-primary,#ff8792);font-size:12px;margin:0}
     .dshdc-view{padding-top:28px}.dshdc-view[hidden]{display:none}.dshdc-toolbar,.dshdc-row{align-items:center;display:flex;gap:12px;justify-content:space-between}.dshdc-toolbar{margin-bottom:16px}.dshdc-toolbar h2{font-size:20px;margin:0}.dshdc-card{background:var(--dsw-alias-bg-layer-2,rgba(255,255,255,.045));border:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,.12));border-radius:12px;box-sizing:border-box;padding:18px}.dshdc-card h3{font-size:15px;margin:0 0 5px}.dshdc-card p{margin:8px 0}.dshdc-muted{color:var(--dsw-alias-label-secondary,#9da7b5);font-size:13px}.dshdc-stack{display:grid;gap:10px}.dshdc-skill-card{padding:14px}.dshdc-primary,.dshdc-secondary,.dshdc-danger{border-radius:8px;padding:8px 11px}.dshdc-primary{background:var(--dsw-alias-state-business-primary,#4d96ed);border:1px solid transparent;color:#fff}.dshdc-secondary{background:transparent;border:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,.18));color:inherit}.dshdc-danger{background:transparent;border:1px solid rgba(245,108,120,.45);color:#ffafb7}.dshdc-status{color:var(--dsw-alias-state-business-primary,#66adff);font-size:13px;margin-top:18px;min-height:20px}.dshdc-balance{font-size:26px;font-weight:650;margin-top:14px}.dshdc-warning{color:#e7bc70;font-size:13px;margin-top:10px}.dshdc-steps{color:var(--dsw-alias-label-secondary,#9da7b5);margin:12px 0 0;padding-left:21px}.dshdc-steps li{margin:7px 0}.dshdc-link{color:var(--dsw-alias-state-business-primary,#66adff)}.dshdc-github-import{display:flex;gap:10px;margin:14px 0 9px}.dshdc-github-import input{background:var(--dsw-alias-bg-base,#111214);border:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,.18));border-radius:8px;color:inherit;flex:1;font:inherit;min-width:0;padding:9px 11px}.dshdc-import-progress{display:grid;gap:7px;margin-top:12px}.dshdc-import-progress[hidden]{display:none}.dshdc-import-progress progress{accent-color:var(--dsw-alias-state-business-primary,#4d96ed);height:7px;width:100%}
     .dshdc-thought-summary{align-items:center;background:transparent;border:0;border-radius:7px;color:var(--dsw-alias-label-secondary,#8c96a3);cursor:pointer;display:inline-flex;font:14px/24px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;gap:7px;margin:0 -7px;padding:4px 7px;text-align:left}.dshdc-thought-summary:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.09));color:var(--dsw-alias-label-primary,#eef2f7)}.dshdc-thought-summary::before{content:"◌";font-size:16px}.dshdc-thought-hidden{display:none!important}
-    html[data-dsh-desktop-page-active] [data-slot="conversation"]{display:none!important}
+    html[data-dsh-desktop-mac-os] [data-slot="sidebar"]>div>[class*="logoRow"],html[data-dsh-desktop-mac-os] [data-slot="conversation"] header{-webkit-app-region:drag}
+    html[data-dsh-desktop-mac-os] [data-slot="sidebar"]>div>[class*="logoRow"] :is(button,a,input,textarea,select,[role="button"]),html[data-dsh-desktop-mac-os] [data-slot="conversation"] header :is(button,a,input,textarea,select,[role="button"]){-webkit-app-region:no-drag}
+    html[data-dsh-desktop-page-active] [data-slot="conversation"]{display:none!important}html[data-dsh-desktop-page-active] [data-pane="conversation"]>:not(#dsh-desktop-workbench),html[data-dsh-desktop-page-active] [class*="centerCol"]>:not(#dsh-desktop-workbench){display:none!important}html[data-dsh-desktop-page-active][data-dsh-taskboard-active] [data-dsh-taskboard-view][data-dsh-taskboard-view]{display:none!important}
     @media(max-width:880px){#dsh-desktop-workbench{padding:28px 24px 48px}.dshdc-hero{flex-direction:column}.dshdc-back{align-self:flex-start}}
   `;
   document.head.appendChild(style);
@@ -105,6 +113,12 @@ function injectDesktopPages() {
   let skins = [];
   let onboardingEndpointDraft = "";
   let onboardingEndpointLoaded = false;
+  const panelActivateEvent = "dsh-panel-activate";
+  const desktopPanelName = "desktop-page";
+  // Task Board 0.1.20 only releases its center-column ownership when another
+  // plugin announces the legacy "ssh" panel. Reuse that published escape hatch
+  // until the upstream package accepts a generic conversation/desktop event.
+  const taskboardClosePanelName = "ssh";
 
   const renderNavigation = () => {
     const currentPage = nav.querySelector("[aria-current='page']")?.dataset.page;
@@ -187,6 +201,15 @@ function injectDesktopPages() {
     document.documentElement.removeAttribute("data-dsh-desktop-page-active");
     nav.querySelectorAll("[aria-current]").forEach((button) => button.removeAttribute("aria-current"));
   };
+  const closeTaskboardPanel = () => {
+    if (document.documentElement.hasAttribute("data-dsh-taskboard-active")) {
+      document.dispatchEvent(new CustomEvent(panelActivateEvent, { detail: taskboardClosePanelName }));
+    }
+  };
+  const returnToConversation = () => {
+    closePage();
+    closeTaskboardPanel();
+  };
   const updatePageHeading = (page) => {
     title.textContent = text().pages[page].title;
     description.textContent = text().pages[page].description;
@@ -203,6 +226,8 @@ function injectDesktopPages() {
   };
   const openPage = async (page) => {
     const currentPage = pages[page] ? page : "skills";
+    closeTaskboardPanel();
+    document.dispatchEvent(new CustomEvent(panelActivateEvent, { detail: desktopPanelName }));
     root.hidden = false;
     document.documentElement.setAttribute("data-dsh-desktop-page-active", "");
     updatePageHeading(currentPage);
@@ -218,9 +243,16 @@ function injectDesktopPages() {
     }
   };
   const mountNativeSlots = () => {
-    const sidebar = document.querySelector('[data-slot="sidebar"]');
-    const workspaceOutlet = sidebar?.querySelector('[data-slot="sidebar.workspaces"]');
-    if (workspaceOutlet?.parentElement && nav.parentElement !== workspaceOutlet.parentElement) workspaceOutlet.parentElement.insertBefore(nav, workspaceOutlet);
+    const sidebarColumn = document.querySelector('[data-pane="sidebar"], [class*="sidebarCol"], [data-slot="sidebar"]');
+    const sidebarRoot = sidebarColumn?.querySelector('[class*="logoRow"]')?.parentElement ?? sidebarColumn?.firstElementChild;
+    const newSession = sidebarRoot?.querySelector('button[class*="newSession"]');
+    const anchor = newSession?.closest('[class*="logoRow"]') ?? newSession;
+    if (sidebarRoot && anchor) {
+      if (nav.parentElement !== sidebarRoot || nav.previousElementSibling !== anchor) sidebarRoot.insertBefore(nav, anchor.nextElementSibling);
+    } else {
+      const workspaceOutlet = sidebarColumn?.querySelector('[data-slot="sidebar.workspaces"]');
+      if (workspaceOutlet?.parentElement && nav.parentElement !== workspaceOutlet.parentElement) workspaceOutlet.parentElement.insertBefore(nav, workspaceOutlet);
+    }
     const conversation = document.querySelector('[data-slot="conversation"]');
     if (conversation?.parentElement && root.parentElement !== conversation.parentElement) conversation.parentElement.appendChild(root);
   };
@@ -380,7 +412,7 @@ function injectDesktopPages() {
   };
 
   const startSkillCreator = () => {
-    closePage();
+    returnToConversation();
     const sidebar = document.querySelector('[data-slot="sidebar"]');
     const newSession = sidebar?.querySelector("button.hHd-Xa_newSession")
       || [...(sidebar?.querySelectorAll("button") || [])].find((button) => /新建会话|new session/i.test(button.getAttribute("aria-label") || ""));
@@ -397,6 +429,23 @@ function injectDesktopPages() {
     const button = event.target.closest("button[data-page]");
     if (button) openPage(button.dataset.page);
   });
+  document.addEventListener(panelActivateEvent, (event) => {
+    if (event.detail !== desktopPanelName && !root.hidden) closePage();
+  });
+  const isSidebarNavigationClick = (event) => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (!target || target.closest("#dsh-desktop-nav")) return false;
+    const sidebar = target.closest('[data-pane="sidebar"], [class*="sidebarCol"], [data-slot="sidebar"]');
+    if (!sidebar) return false;
+    if (target.closest("[data-dsh-taskboard-entry]")) {
+      if (!root.hidden) closePage();
+      return false;
+    }
+    return Boolean(target.closest('button,a,[role="button"],[role="treeitem"],[class*="session"],[class*="workspace"],[class*="project"],[class*="searchResult"]'));
+  };
+  document.addEventListener("click", (event) => {
+    if (isSidebarNavigationClick(event)) returnToConversation();
+  }, true);
   root.addEventListener("click", async (event) => {
     const button = event.target.closest("button[data-action]");
     if (!button || button.disabled) return;

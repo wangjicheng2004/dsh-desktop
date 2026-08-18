@@ -194,13 +194,25 @@ test("imports a selected dsh-web-ui catalog skin from its pinned source files", 
   });
 });
 
-test("ships locale-synced desktop navigation with a high-contrast usage marker", async () => {
+test("ships locale-synced desktop navigation in the compact sidebar style", async () => {
   const preload = await fs.readFile(path.join(__dirname, "..", "desktop-preload.js"), "utf8");
   assert.match(preload, /desktop:locale:get/);
   assert.match(preload, /activeLocale/);
   assert.match(preload, /syncLocale/);
-  assert.match(preload, /data-ds-dark-theme/);
-  assert.match(preload, /usage.*◉/s);
+  assert.match(preload, /skills: \{ icon: '<svg viewBox=/);
+  assert.match(preload, /#dsh-desktop-nav button\{.*height:32px/s);
+  assert.match(preload, /sidebarRoot\.insertBefore\(nav, anchor\.nextElementSibling\)/);
+  assert.match(preload, /\[data-sidebar-collapsed\] \.dshdc-nav-label\{display:none\}/);
+  assert.match(preload, /const panelActivateEvent = "dsh-panel-activate"/);
+  assert.match(preload, /const desktopPanelName = "desktop-page"/);
+  assert.match(preload, /const taskboardClosePanelName = "ssh"/);
+  assert.match(preload, /data-dsh-taskboard-active/);
+  assert.match(preload, /data-dsh-taskboard-view\]\[data-dsh-taskboard-view\]/);
+  assert.match(preload, /document\.dispatchEvent\(new CustomEvent\(panelActivateEvent, \{ detail: desktopPanelName \}\)\)/);
+  assert.match(preload, /event\.detail !== desktopPanelName && !root\.hidden/);
+  assert.match(preload, /isSidebarNavigationClick/);
+  assert.match(preload, /returnToConversation\(\)/);
+  assert.match(preload, /target\.closest\("\[data-dsh-taskboard-entry\]"\)/);
 });
 
 test("ships the dsh-web-ui catalog without its external-script trading skin", async () => {
@@ -212,11 +224,29 @@ test("ships the dsh-web-ui catalog without its external-script trading skin", as
   assert.doesNotMatch(services, /"trading"/);
 });
 
+test("ships the upstream task board and Git graph without the side workbench", async () => {
+  const root = path.join(__dirname, "..");
+  const manifest = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
+  const main = await fs.readFile(path.join(root, "main.js"), "utf8");
+
+  assert.equal(manifest.dependencies["@linxin666/dsh-client-ui-task-board"], "0.1.20");
+  assert.equal(manifest.dependencies["@linxin666/dsh-client-ui-git-graph"], "0.1.20");
+  assert.match(main, /dsh-client-ui-task-board/);
+  assert.match(main, /dsh-client-ui-git-graph/);
+  assert.match(main, /bundledRuntimePackageDirectory\("@deepseek-ai\/dsh-settings"\)/);
+  assert.match(main, /resolveRuntimeDependency/);
+  assert.match(main, /Object\.keys\(sourcePackage\.dependencies \|\| \{\}\)/);
+  assert.match(main, /retiredPackages = new Set\(\["@dsh-desktop\/git-branch"\]\)/);
+  assert.match(main, /await ensureDesktopClientPlugins\(\);\s+if \(await waitForServer\(3000\)\)/);
+  assert.doesNotMatch(main, /side-workbench|desktop:workbench|workbench-panel\.html|workbench-preload\.js/);
+});
+
 test("pins desktop builds to a supported Node version and verifies Windows on Windows", async () => {
   const root = path.join(__dirname, "..");
   const manifest = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
   const installer = await fs.readFile(path.join(root, "install.ps1"), "utf8");
   const main = await fs.readFile(path.join(root, "main.js"), "utf8");
+  const preload = await fs.readFile(path.join(root, "desktop-preload.js"), "utf8");
   const workflow = await fs.readFile(path.join(root, ".github", "workflows", "verify-desktop-builds.yml"), "utf8");
 
   assert.equal(manifest.engines.node, ">=22.19.0");
@@ -234,6 +264,10 @@ test("pins desktop builds to a supported Node version and verifies Windows on Wi
   assert.doesNotMatch(JSON.stringify(manifest.build.extraResources), /"from":"node_modules"/);
   assert.match(main, /app\.asar\.unpacked.*node_modules/s);
   assert.match(main, /titleBarStyle:\s*process\.platform === "darwin" \? "hiddenInset" : "default"/);
+  assert.match(preload, /dataset\.dshDesktopMacOs/);
+  assert.match(preload, /\[data-slot="sidebar"\]>div>\[class\*="logoRow"\].*-webkit-app-region:drag/);
+  assert.match(preload, /\[data-slot="conversation"\] header.*-webkit-app-region:drag/);
+  assert.match(preload, /:is\(button,a,input,textarea,select,\[role="button"\]\)\{-webkit-app-region:no-drag\}/);
 });
 
 test("activates a trusted DSH plugin skin through the web profile", async () => {

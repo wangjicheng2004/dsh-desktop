@@ -18,6 +18,8 @@
   "dependencies": {
     "@deepseek-ai/cordis-plugin-group": "1.0.1",
     "@deepseek-ai/dsh": "0.1.0-rc.6",
+    "@linxin666/dsh-client-ui-git-graph": "0.1.20",
+    "@linxin666/dsh-client-ui-task-board": "0.1.20",
     "js-yaml": "^4.3.1",
     "yauzl": "^3.4.0"
   },
