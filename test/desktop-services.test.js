@@ -241,6 +241,38 @@ test("ships the upstream task board and Git graph without the side workbench", a
   assert.doesNotMatch(main, /side-workbench|desktop:workbench|workbench-panel\.html|workbench-preload\.js/);
 });
 
+test("declares DSH peer runtime packages as desktop production dependencies", async () => {
+  const root = path.join(__dirname, "..");
+  const manifest = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
+  const lock = JSON.parse(await fs.readFile(path.join(root, "package-lock.json"), "utf8"));
+  const runtimePeerPackages = [
+    "@deepseek-ai/dsh-anonymous-user-id",
+    "@deepseek-ai/dsh-atomic-write",
+    "@deepseek-ai/dsh-bash-local",
+    "@deepseek-ai/dsh-code-runtime",
+    "@deepseek-ai/dsh-compaction",
+    "@deepseek-ai/dsh-fs",
+    "@deepseek-ai/dsh-invariants",
+    "@deepseek-ai/dsh-output-retention",
+    "@deepseek-ai/dsh-sandbox",
+    "@deepseek-ai/dsh-scope",
+    "@deepseek-ai/dsh-session-telemetry",
+    "@deepseek-ai/dsh-session-title-llm",
+    "@deepseek-ai/dsh-shell",
+    "@deepseek-ai/dsh-spill",
+    "@deepseek-ai/dsh-subagent-in-process-driver",
+    "@deepseek-ai/dsh-subprocess",
+    "@deepseek-ai/dsh-timeout",
+    "@deepseek-ai/dsh-workflow",
+  ];
+
+  for (const packageName of runtimePeerPackages) {
+    assert.equal(manifest.dependencies[packageName], "0.1.0-rc.6", `${packageName} must be a production dependency`);
+    assert.equal(lock.packages[""].dependencies[packageName], "0.1.0-rc.6", `${packageName} must be locked at the root`);
+    assert.equal(lock.packages[`node_modules/${packageName}`].version, "0.1.0-rc.6", `${packageName} package must be locked`);
+  }
+});
+
 test("pins desktop builds to a supported Node version and verifies Windows on Windows", async () => {
   const root = path.join(__dirname, "..");
   const manifest = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
