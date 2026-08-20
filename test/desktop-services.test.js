@@ -295,6 +295,15 @@ test("pins desktop builds to a supported Node version and verifies Windows on Wi
   assert.deepEqual(manifest.build.asarUnpack, ["node_modules/**/*"]);
   assert.doesNotMatch(JSON.stringify(manifest.build.extraResources), /"from":"node_modules"/);
   assert.match(main, /app\.asar\.unpacked.*node_modules/s);
+  assert.match(main, /clearCache\(\)/);
+  assert.match(main, /clearStorageData\(\{ storages: \["serviceworkers", "cachestorage"\] \}\)/);
+  assert.match(main, /desktopVersion/);
+  assert.match(main, /console-message/);
+  assert.match(main, /did-fail-load/);
+  assert.match(main, /render-process-gone/);
+  assert.match(main, /recoverBlankWindow/);
+  assert.match(main, /rootChildren === 0/);
+  assert.match(main, /clearSkin\(\)/);
   assert.match(main, /titleBarStyle:\s*process\.platform === "darwin" \? "hiddenInset" : "default"/);
   assert.match(preload, /dataset\.dshDesktopMacOs/);
   assert.match(preload, /\[data-slot="sidebar"\]>div>\[class\*="logoRow"\].*-webkit-app-region:drag/);

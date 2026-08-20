@@ -1,7 +1,7 @@
 // DeepSeek Harness desktop wrapper.
 // The packaged app runs its bundled DSH copy with Electron's embedded Node.js.
 
-const { app, BrowserWindow, Tray, Menu, dialog, nativeImage, ipcMain } = require("electron");
+const { app, BrowserWindow, Tray, Menu, dialog, nativeImage, ipcMain, session } = require("electron");
 const { spawn, exec, execFileSync } = require("child_process");
 const fs = require("fs");
 const fsp = require("fs/promises");
@@ -18,6 +18,7 @@ let desktopServices = null;
 let isQuitting = false;
 let isRestartingDsh = false;
 let dshServiceReady = false;
+let blankWindowRecoveryAttempted = false;
 
 if (!app.requestSingleInstanceLock()) app.quit();
 
@@ -41,6 +42,23 @@ function log(message) {
 
 function logFilePath() {
   return appDataPath("dsh.log");
+}
+
+async function clearWebRuntimeCache(reason) {
+  try {
+    await session.defaultSession.clearCache();
+    await session.defaultSession.clearStorageData({ storages: ["serviceworkers", "cachestorage"] });
+    log(`已清理 Electron Web 缓存：${reason}`);
+  } catch (error) {
+    log(`清理 Electron Web 缓存失败：${error.message}`);
+  }
+}
+
+function webUrl() {
+  const url = new URL(URL);
+  url.searchParams.set("desktopVersion", app.getVersion());
+  url.searchParams.set("desktopLaunch", String(Date.now()));
+  return url.toString();
 }
 
 function iconPath() {
@@ -349,6 +367,66 @@ async function ensureDesktopClientPlugins() {
   return true;
 }
 
+function attachWindowDiagnostics(window) {
+  window.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    log(`[renderer console:${level}] ${message} (${sourceId || "unknown"}:${line || 0})`);
+  });
+  window.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+    log(`窗口加载失败 code=${errorCode} url=${validatedURL}: ${errorDescription}`);
+  });
+  window.webContents.on("render-process-gone", (_event, details) => {
+    log(`渲染进程退出 reason=${details.reason} exitCode=${details.exitCode}`);
+  });
+}
+
+async function inspectWindowRenderState(window) {
+  return window.webContents.executeJavaScript(`(() => {
+    const root = document.getElementById("root");
+    return {
+      href: location.href,
+      readyState: document.readyState,
+      hasBootManifest: Boolean(window.__DSH_BOOT__),
+      rootChildren: root ? root.children.length : null,
+      bodyText: document.body ? document.body.innerText.trim().slice(0, 200) : "",
+    };
+  })()`, true);
+}
+
+async function recoverBlankWindow(window) {
+  if (blankWindowRecoveryAttempted || window.isDestroyed()) return;
+  let state;
+  try {
+    state = await inspectWindowRenderState(window);
+  } catch (error) {
+    log(`白屏检测失败：${error.message}`);
+    return;
+  }
+  log(`窗口渲染状态：${JSON.stringify(state)}`);
+  const blank = state.readyState === "complete"
+    && state.hasBootManifest
+    && state.rootChildren === 0
+    && !state.bodyText;
+  if (!blank) return;
+
+  blankWindowRecoveryAttempted = true;
+  log("检测到 Web UI 白屏，准备清理缓存并禁用当前插件皮肤后重载。");
+  await clearWebRuntimeCache("white screen recovery");
+  try {
+    const activeSkin = (await requireDesktopServices().listSkins()).find((skin) => skin.active);
+    if (activeSkin?.type === "plugin") {
+      const result = await requireDesktopServices().clearSkin();
+      log(`已禁用导致白屏风险的插件皮肤：${activeSkin.id}`);
+      if (result.requiresRestart && dshProcess) await restartDshService();
+    } else {
+      log("白屏恢复未发现活动插件皮肤，仅执行强制无缓存重载。");
+      window.webContents.reloadIgnoringCache();
+    }
+  } catch (error) {
+    log(`白屏恢复失败：${error.message}`);
+    window.webContents.reloadIgnoringCache();
+  }
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -365,7 +443,11 @@ function createWindow() {
       contextIsolation: true,
     },
   });
-  mainWindow.loadURL(URL);
+  attachWindowDiagnostics(mainWindow);
+  mainWindow.webContents.on("did-finish-load", () => {
+    setTimeout(() => recoverBlankWindow(mainWindow), 10_000).unref();
+  });
+  mainWindow.loadURL(webUrl());
   mainWindow.on("close", (event) => {
     if (!isQuitting) {
       event.preventDefault();
@@ -440,6 +522,7 @@ function registerDesktopIpc() {
 
 app.whenReady().then(async () => {
   log("=== DeepSeek Harness 桌面版启动 ===");
+  await clearWebRuntimeCache("startup");
   desktopServices = createDesktopServices({ dshHome: dshHomePath() });
   registerDesktopIpc();
   createTray();
