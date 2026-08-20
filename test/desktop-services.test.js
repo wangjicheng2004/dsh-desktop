@@ -304,6 +304,11 @@ test("pins desktop builds to a supported Node version and verifies Windows on Wi
   assert.match(main, /recoverBlankWindow/);
   assert.match(main, /rootChildren === 0/);
   assert.match(main, /clearSkin\(\)/);
+  assert.match(main, /function isWindowUsable\(window\)/);
+  assert.match(main, /!window\.isDestroyed\(\)/);
+  assert.match(main, /mainWindow = null;\s+createWindow\(\);/);
+  assert.match(main, /recoverBlankWindow\(window\)/);
+  assert.match(main, /webContents\.isDestroyed\(\)/);
   assert.match(main, /titleBarStyle:\s*process\.platform === "darwin" \? "hiddenInset" : "default"/);
   assert.match(preload, /dataset\.dshDesktopMacOs/);
   assert.match(preload, /\[data-slot="sidebar"\]>div>\[class\*="logoRow"\].*-webkit-app-region:drag/);

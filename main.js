@@ -286,7 +286,11 @@ async function restartDshService() {
     log("皮肤切换：DSH 服务已重新就绪");
     // Complete the IPC response before reloading, so the UI does not report a
     // successful service restart as a cancelled remote invocation.
-    setTimeout(() => mainWindow?.webContents.reloadIgnoringCache(), 250).unref();
+    setTimeout(() => {
+      if (isWindowUsable(mainWindow) && !mainWindow.webContents.isDestroyed()) {
+        mainWindow.webContents.reloadIgnoringCache();
+      }
+    }, 250).unref();
   } catch (error) {
     log(`皮肤切换：DSH 重启失败：${error.message}`);
     throw new Error(`皮肤已写入，但 DSH 重启失败：${error.message} 请重启应用并查看日志：${logFilePath()}`);
@@ -380,6 +384,7 @@ function attachWindowDiagnostics(window) {
 }
 
 async function inspectWindowRenderState(window) {
+  if (!isWindowUsable(window) || window.webContents.isDestroyed()) return null;
   return window.webContents.executeJavaScript(`(() => {
     const root = document.getElementById("root");
     return {
@@ -393,7 +398,7 @@ async function inspectWindowRenderState(window) {
 }
 
 async function recoverBlankWindow(window) {
-  if (blankWindowRecoveryAttempted || window.isDestroyed()) return;
+  if (blankWindowRecoveryAttempted || !isWindowUsable(window) || window.webContents.isDestroyed()) return;
   let state;
   try {
     state = await inspectWindowRenderState(window);
@@ -401,6 +406,7 @@ async function recoverBlankWindow(window) {
     log(`白屏检测失败：${error.message}`);
     return;
   }
+  if (!state || !isWindowUsable(window) || window.webContents.isDestroyed()) return;
   log(`窗口渲染状态：${JSON.stringify(state)}`);
   const blank = state.readyState === "complete"
     && state.hasBootManifest
@@ -411,24 +417,30 @@ async function recoverBlankWindow(window) {
   blankWindowRecoveryAttempted = true;
   log("检测到 Web UI 白屏，准备清理缓存并禁用当前插件皮肤后重载。");
   await clearWebRuntimeCache("white screen recovery");
+  if (!isWindowUsable(window) || window.webContents.isDestroyed()) return;
   try {
     const activeSkin = (await requireDesktopServices().listSkins()).find((skin) => skin.active);
+    if (!isWindowUsable(window) || window.webContents.isDestroyed()) return;
     if (activeSkin?.type === "plugin") {
       const result = await requireDesktopServices().clearSkin();
       log(`已禁用导致白屏风险的插件皮肤：${activeSkin.id}`);
       if (result.requiresRestart && dshProcess) await restartDshService();
     } else {
       log("白屏恢复未发现活动插件皮肤，仅执行强制无缓存重载。");
-      window.webContents.reloadIgnoringCache();
+      if (isWindowUsable(window) && !window.webContents.isDestroyed()) {
+        window.webContents.reloadIgnoringCache();
+      }
     }
   } catch (error) {
     log(`白屏恢复失败：${error.message}`);
-    window.webContents.reloadIgnoringCache();
+    if (isWindowUsable(window) && !window.webContents.isDestroyed()) {
+      window.webContents.reloadIgnoringCache();
+    }
   }
 }
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  const window = new BrowserWindow({
     width: 1280,
     height: 860,
     title: "DeepSeek Harness",
@@ -443,27 +455,36 @@ function createWindow() {
       contextIsolation: true,
     },
   });
-  attachWindowDiagnostics(mainWindow);
-  mainWindow.webContents.on("did-finish-load", () => {
-    setTimeout(() => recoverBlankWindow(mainWindow), 10_000).unref();
+  mainWindow = window;
+  attachWindowDiagnostics(window);
+  window.webContents.on("did-finish-load", () => {
+    setTimeout(() => recoverBlankWindow(window), 10_000).unref();
   });
-  mainWindow.loadURL(webUrl());
-  mainWindow.on("close", (event) => {
+  window.loadURL(webUrl());
+  window.on("close", (event) => {
     if (!isQuitting) {
       event.preventDefault();
       log("窗口关闭，最小化到托盘（服务继续运行）");
-      mainWindow.hide();
+      if (isWindowUsable(window)) window.hide();
     }
   });
-  mainWindow.on("closed", () => { mainWindow = null; });
+  window.on("closed", () => {
+    if (mainWindow === window) mainWindow = null;
+  });
+}
+
+function isWindowUsable(window) {
+  return Boolean(window && !window.isDestroyed());
 }
 
 function showWindow() {
-  if (!mainWindow) createWindow();
-  else {
-    mainWindow.show();
-    mainWindow.focus();
+  if (!isWindowUsable(mainWindow)) {
+    mainWindow = null;
+    createWindow();
+    return;
   }
+  mainWindow.show();
+  mainWindow.focus();
 }
 
 function createTray() {
@@ -473,7 +494,7 @@ function createTray() {
   tray.setToolTip("DeepSeek Harness");
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: "显示窗口", click: showWindow },
-    { label: "退出", click: () => { isQuitting = true; if (mainWindow) mainWindow.close(); killProcessTree(dshProcess); app.quit(); } },
+    { label: "退出", click: () => { isQuitting = true; if (isWindowUsable(mainWindow)) mainWindow.close(); killProcessTree(dshProcess); app.quit(); } },
   ]));
   tray.on("click", showWindow);
 }
