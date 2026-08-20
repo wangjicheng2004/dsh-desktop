@@ -295,6 +295,8 @@ test("pins desktop builds to a supported Node version and verifies Windows on Wi
   assert.deepEqual(manifest.build.asarUnpack, ["node_modules/**/*"]);
   assert.doesNotMatch(JSON.stringify(manifest.build.extraResources), /"from":"node_modules"/);
   assert.match(main, /app\.asar\.unpacked.*node_modules/s);
+  assert.match(main, /const SERVER_URL = `http:\/\/127\.0\.0\.1:\$\{PORT\}`;/);
+  assert.match(main, /new globalThis\.URL\(SERVER_URL\)/);
   assert.match(main, /clearCache\(\)/);
   assert.match(main, /clearStorageData\(\{ storages: \["serviceworkers", "cachestorage"\] \}\)/);
   assert.match(main, /desktopVersion/);

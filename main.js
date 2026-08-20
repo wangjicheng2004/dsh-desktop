@@ -9,7 +9,7 @@ const path = require("path");
 const { createDesktopServices } = require("./desktop-services");
 
 const PORT = 3080;
-const URL = `http://127.0.0.1:${PORT}`;
+const SERVER_URL = `http://127.0.0.1:${PORT}`;
 
 let mainWindow = null;
 let dshProcess = null;
@@ -55,7 +55,7 @@ async function clearWebRuntimeCache(reason) {
 }
 
 function webUrl() {
-  const url = new URL(URL);
+  const url = new globalThis.URL(SERVER_URL);
   url.searchParams.set("desktopVersion", app.getVersion());
   url.searchParams.set("desktopLaunch", String(Date.now()));
   return url.toString();
@@ -218,7 +218,7 @@ function delay(milliseconds) {
 
 async function isServerResponding() {
   try {
-    const response = await fetch(URL, { signal: AbortSignal.timeout(1500) });
+    const response = await fetch(SERVER_URL, { signal: AbortSignal.timeout(1500) });
     return response.status >= 200 && response.status < 500;
   } catch {
     return false;
@@ -566,7 +566,7 @@ app.whenReady().then(async () => {
     return;
   }
   if (!(await waitForServer(120000, child))) {
-    dialog.showErrorBox("服务未就绪", `等待 ${URL} 超时。请查看日志：${logFilePath()}`);
+    dialog.showErrorBox("服务未就绪", `等待 ${SERVER_URL} 超时。请查看日志：${logFilePath()}`);
     killProcessTree(child);
     app.quit();
     return;
